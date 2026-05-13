@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Connexion Brigade Municipale</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial;
+    }
+
+    body{
+  background: radial-gradient(circle at top, #1e293b, #0f172a);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  color:white;
+  padding:20px;
+}
+
+    .container{
+  width:100%;
+  max-width:500px;
+  background: rgba(30, 41, 59, 0.9);
+  padding:35px;
+  border-radius:25px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+    h1{
+  text-align:center;
+  margin-bottom:30px;
+  font-size:28px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:#60a5fa;
+}
+
+    .tabs{
+      display:flex;
+      margin-bottom:20px;
+    }
+
+    .tab{
+  flex:1;
+  padding:12px;
+  border:none;
+  background:#0f172a;
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
+  border-radius:10px;
+  margin:0 5px;
+}
+
+.tab:hover{
+  background:#1f2937;
+}
+
+.active{
+  background:#2563eb;
+  box-shadow:0 0 10px #2563eb;
+}
+
+    input{
+  width:100%;
+  padding:14px;
+  margin-bottom:12px;
+  border:none;
+  border-radius:12px;
+  background:#0f172a;
+  color:white;
+  outline:none;
+  transition:0.3s;
+}
+
+input:focus{
+  box-shadow:0 0 0 2px #2563eb;
+}
+
+    button.submit{
+      width:100%;
+      padding:15px;
+      border:none;
+      border-radius:10px;
+      background:#2563eb;
+      color:white;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    .form{
+      display:none;
+    }
+
+    .show{
+      display:block;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>BRIGADE MUNICIPALE</h1>
+
+  <div class="tabs">
+    <button class="tab active" id="loginTab">
+      Connexion
+    </button>
+
+    <button class="tab" id="registerTab">
+      Inscription
+    </button>
+  </div>
+
+  <!-- CONNEXION -->
+
+  <div class="form show" id="loginForm">
+
+    <input type="text" id="loginNom" placeholder="Nom RP">
+
+    <input type="text" id="loginPrenom" placeholder="Prénom RP">
+
+    <input type="password" id="loginPassword" placeholder="Mot de passe">
+
+    <button class="submit" id="loginBtn">
+      Se connecter
+    </button>
+
+  </div>
+
+  <!-- INSCRIPTION -->
+
+  <div class="form" id="registerForm">
+
+    <input type="text" id="registerNom" placeholder="Nom RP">
+
+    <input type="text" id="registerPrenom" placeholder="Prénom RP">
+
+    <input type="date" id="registerBirth">
+
+    <input type="password" id="registerPassword" placeholder="Mot de passe">
+
+    <button class="submit" id="registerBtn">
+      S'inscrire
+    </button>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU8DzlUwcVu0W4ywfo",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+console.log("Firebase OK");
+
+const loginTab = document.getElementById("loginTab");
+const registerTab = document.getElementById("registerTab");
+
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+
+// switch tabs
+loginTab.onclick = () => {
+  loginTab.classList.add("active");
+  registerTab.classList.remove("active");
+
+  loginForm.classList.add("show");
+  registerForm.classList.remove("show");
+};
+
+registerTab.onclick = () => {
+  registerTab.classList.add("active");
+  loginTab.classList.remove("active");
+
+  registerForm.classList.add("show");
+  loginForm.classList.remove("show");
+};
+
+//
+// 🔵 INSCRIPTION
+//
+document.getElementById("registerBtn").addEventListener("click", async () => {
+
+  const nom = document.getElementById("registerNom").value;
+  const prenom = document.getElementById("registerPrenom").value;
+  const naissance = document.getElementById("registerBirth").value;
+  const password = document.getElementById("registerPassword").value;
+
+  if(!nom || !prenom || !naissance || !password){
+    alert("Remplis tous les champs");
+    return;
+  }
+
+  const id = nom.trim() + "_" + prenom.trim();
+
+  await setDoc(doc(db, "users", id), {
+    nom,
+    prenom,
+    naissance,
+    password,
+    role: "candidat",
+    createdAt: new Date()
+  });
+
+  alert("Compte créé !");
+});
+
+//
+// 🟢 CONNEXION
+//
+document.getElementById("loginBtn").addEventListener("click", async () => {
+
+  const nom = document.getElementById("loginNom").value;
+  const prenom = document.getElementById("loginPrenom").value;
+  const password = document.getElementById("loginPassword").value;
+
+  if(!nom || !prenom || !password){
+    alert("Remplis tous les champs");
+    return;
+  }
+
+  const querySnapshot = await getDocs(collection(db, "users"));
+
+  let userFound = null;
+
+  querySnapshot.forEach((docSnap) => {
+
+    const data = docSnap.data();
+
+    if(
+      data.nom === nom &&
+      data.prenom === prenom &&
+      data.password === password
+    ){
+      userFound = {
+        id: docSnap.id,
+        ...data
+      };
+    }
+
+  });
+
+  if(userFound){
+    window.location.href = "apply.html";
+
+  } else {
+    alert("Identifiants incorrects");
+  }
+
+});
+
+</script>
+</body>
+</html>

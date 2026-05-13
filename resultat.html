@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Résultat candidature</title>
+
+<style>
+
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.card{
+  background:#1e293b;
+  padding:40px;
+  border-radius:20px;
+  width:400px;
+  text-align:center;
+  box-shadow:0 0 20px rgba(0,0,0,0.4);
+}
+
+h1{
+  margin-bottom:20px;
+}
+
+#status{
+  font-size:24px;
+  font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+  <h1>Résultat candidature</h1>
+
+  <p id="status">Chargement...</p>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU8DzlUwcVu0W4ywfo",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+  window.location.href = "index.html";
+}
+
+const status = document.getElementById("status");
+
+const ref = doc(db, "applications", user.id);
+const snap = await getDoc(ref);
+
+if (!snap.exists()) {
+  status.innerText = "Aucune candidature";
+  status.style.color = "gray";
+} else {
+  const data = snap.data();
+
+  if (data.status === "closed") {
+
+if (data.decision === "accepté") {
+  status.innerHTML = `
+    <div style="font-size:28px; margin-bottom:10px;">🎉 Accepté</div>
+
+    <div style="font-size:16px; line-height:1.6; opacity:0.9;">
+      ✔ Ouvre un ticket pour organiser une date de recrutement<br>
+      ✔ Tu seras pris en charge par un recruteur<br>
+      ✔ Prépare-toi pour ton entretien
+    </div>
+
+    <div style="margin-top:15px; font-size:13px; opacity:0.6;">
+      Statut : validation finale en attente
+    </div>
+  `;
+
+  status.style.color = "#22c55e";
+}
+
+else if (data.decision === "refusé") {
+  status.innerHTML = `
+    <div style="font-size:28px; margin-bottom:10px;">❌ Refusé</div>
+
+    <div style="font-size:16px; line-height:1.6; opacity:0.9;">
+      ⛔ Ta candidature n’a pas été retenue<br>
+      ⏳ Tu pourras retenter dans 1 semaine<br>
+      📌 Travaille ton RP et reviens plus fort
+    </div>
+  `;
+
+  status.style.color = "#ef4444";
+}
+
+else {
+  status.innerHTML = `
+    <div style="font-size:28px; margin-bottom:10px;">⏳ En attente</div>
+
+    <div style="font-size:16px; line-height:1.6; opacity:0.9;">
+      Ton dossier est en cours d’analyse<br>
+      Les recruteurs votent actuellement
+    </div>
+
+    <div style="margin-top:15px; font-size:13px; opacity:0.6;">
+      Merci de patienter...
+    </div>
+  `;
+
+  status.style.color = "#f59e0b";
+}
+
+} else {
+  status.innerHTML = `
+    <div style="font-size:28px; margin-bottom:10px;">🟦 Vote en cours</div>
+
+    <div style="font-size:16px; line-height:1.6; opacity:0.9;">
+      Les recruteurs examinent ta candidature<br>
+      Chaque vote compte actuellement
+    </div>
+
+    <div style="margin-top:15px; font-size:13px; opacity:0.6;">
+      Résultat bientôt disponible
+    </div>
+  `;
+
+  status.style.color = "#60a5fa";
+}
+}
+
+</script>
+
+</body>
+</html>
