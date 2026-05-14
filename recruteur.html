@@ -111,6 +111,84 @@
   opacity:0.9;
 }
 
+
+
+
+
+
+
+
+
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.7);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
+
+.hidden{ display:none; }
+
+.modal-box{
+  background:#1e293b;
+  padding:25px;
+  border-radius:15px;
+  width:350px;
+  text-align:center;
+}
+
+.reasons{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin:15px 0;
+}
+
+.reason{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#0f172a;
+  color:white;
+  transition:0.2s;
+}
+
+.reason:hover{
+  background:#2563eb;
+}
+
+.reason.selected{
+  background:#16a34a;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:space-between;
+}
+
+.modal-actions button{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+#cancelReason{
+  background:#dc2626;
+  color:white;
+}
+
+#confirmReason{
+  background:#16a34a;
+  color:white;
+}
+
   </style>
 </head>
 
@@ -155,6 +233,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+
+let selectedDocId = null;
+let selectedReason = null;
 
 // 🔐 CHECK RECRUTEUR
 const user = JSON.parse(localStorage.getItem("user"));
@@ -320,6 +402,34 @@ if (data.voteEndAt && now < data.voteEndAt) {
   countdown = `${hours}h ${minutes}m ${seconds}s`;
 }
 
+
+
+
+
+
+function resetModal(){
+  document.querySelectorAll(".reason").forEach(b => b.classList.remove("selected"));
+  selectedReason = null;
+}
+
+
+function initReasons(){
+  document.querySelectorAll(".reason").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".reason").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedReason = btn.textContent;
+    };
+  });
+}
+
+initReasons();
+
+
+
+
+
+
 const div = document.createElement("div");
 div.classList.add("card");
 
@@ -383,7 +493,12 @@ if (acceptBtn) {
 }
 
 if (rejectBtn) {
-  rejectBtn.onclick = () => vote(data.id, -1);
+  rejectBtn.onclick = () => {
+  selectedDocId = data.id;
+  selectedReason = null;
+
+  document.getElementById("reasonModal").classList.remove("hidden");
+};
 }
 
 if (closeBtn) {
@@ -397,6 +512,69 @@ if (closeBtn) {
 }
 
 
+document.querySelectorAll(".reason").forEach(btn => {
+  btn.onclick = () => {
+
+    document.querySelectorAll(".reason").forEach(b => b.classList.remove("selected"));
+
+    btn.classList.add("selected");
+    selectedReason = btn.textContent;
+  };
+});
+
+
+
+document.getElementById("cancelReason").onclick = () => {
+  document.getElementById("reasonModal").classList.add("hidden");
+
+  // reset des variables
+  selectedReason = null;
+  selectedDocId = null;
+
+  // reset visuel des boutons
+  document.querySelectorAll(".reason").forEach(b => {
+    b.classList.remove("selected");
+  });
+};
+
+
+document.getElementById("confirmReason").onclick = async () => {
+
+  if (!selectedReason) {
+    alert("Choisis une raison !");
+    return;
+  }
+
+  const ref = doc(db, "applications", selectedDocId);
+  const snap = await getDoc(ref);
+
+  const data = snap.data();
+
+  const reasons = data.reasons || {};
+  const votes = data.votes || {};
+
+  const userKey = user.nom + "_" + user.prenom;
+
+  // ✅ STRUCTURE PROPRE
+  reasons[userKey] = {
+    vote: -1,
+    reason: selectedReason
+  };
+
+  votes[userKey] = -1;
+
+  await updateDoc(ref, {
+    reasons,
+    votes
+  });
+
+  document.getElementById("reasonModal").classList.add("hidden");
+
+  selectedReason = null;
+  selectedDocId = null;
+
+  loadApplications();
+};
 
 
 
@@ -428,7 +606,33 @@ setInterval(() => {
 
 }, 1000);
 
+
 </script>
+
+
+
+<div id="reasonModal" class="modal hidden">
+  <div class="modal-box">
+
+    <h2>❌ Raison du refus</h2>
+
+    <div class="reasons">
+      <button class="reason">RP insuffisant</button>
+      <button class="reason">Manque de motivation</button>
+      <button class="reason">Expérience insuffisante</button>
+      <button class="reason">Comportement non adapté</button>
+      <button class="reason">Candidature incomplète</button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="cancelReason">Annuler</button>
+      <button id="confirmReason">Valider</button>
+    </div>
+
+  </div>
+</div>
+
+
 
 </body>
 </html>

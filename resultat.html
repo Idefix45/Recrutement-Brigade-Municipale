@@ -205,6 +205,28 @@ if (!snap.exists()) {
   status.style.color = "gray";
 } else {
   const data = snap.data();
+  
+
+
+  const reasons = data.reasons || {};
+
+const summary = {};
+
+Object.values(reasons).forEach(r => {
+  const text = r.reason;
+  summary[text] = (summary[text] || 0) + 1;
+});
+
+const formatted = Object.entries(summary)
+  .sort((a, b) => b[1] - a[1])
+  .map(([reason, count]) => `• ${reason} (${count})`)
+  .join("<br>");
+
+
+
+
+
+
 
   if (data.status === "closed") {
 
@@ -221,24 +243,24 @@ if (!snap.exists()) {
   }
 
   else if (data.decision === "refusé") {
-    setAnimatedHTML(`
-  <div class="badge refused">❌ Candidature refusée</div>
+  setAnimatedHTML(`
+    <div class="badge refused">❌ Candidature refusée</div>
 
-  <div class="box">
-    ⛔ Ta candidature n’a pas été retenue cette fois-ci<br>
-    📊 Le vote des recruteurs n’a pas été favorable
-  </div>
+    <div class="box">
+      ⛔ Ta candidature n’a pas été retenue<br>
+      📊 Décision des recruteurs
+    </div>
 
-  <div class="box">
-    🔁 Tu peux retenter ta chance dans 7 jours<br>
-    📌 Nous t’encourageons à améliorer ton RP avant de repostuler
-  </div>
+    <div class="box">
+      📌 Raisons :<br><br>
+      ${formatted || "Aucune raison"}
+    </div>
 
-  <div class="box">
-    💡 Conseil : travaille ta motivation et ton expérience RP
-  </div>
-`);
-  }
+    <div class="box">
+      🔁 Tu peux retenter dans 7 jours
+    </div>
+  `);
+}
 
   else {
     setAnimatedHTML(`
