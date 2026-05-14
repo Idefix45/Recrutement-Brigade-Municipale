@@ -158,6 +158,47 @@ button:hover::after{
   background:#b91c1c;
 }
 
+
+
+
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.modal-content{
+  background:#1e293b;
+  padding:25px;
+  border-radius:15px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+}
+
+.modal-content h2{
+  margin-bottom:10px;
+}
+
+.modal-content p{
+  line-height:1.6;
+  opacity:0.9;
+}
+
+.modal-content button{
+  margin-top:15px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
+}
   </style>
 </head>
 
@@ -231,6 +272,14 @@ adminBtn.addEventListener("click", () => {
   window.location.href = "recruteur.html";
 });
 
+
+const modal = document.getElementById("modal");
+const closeModal = document.getElementById("closeModal");
+
+closeModal.addEventListener("click", () => {
+  modal.style.display = "none";
+});
+
 document.getElementById("sendBtn").addEventListener("click", async () => {
 
   const nom = document.getElementById("nom").value;
@@ -281,7 +330,7 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
       votes: {}
     });
 
-    document.getElementById("success").style.display = "block";
+    modal.style.display = "flex";
     // 🧹 reset formulaire
 document.getElementById("nom").value = "";
 document.getElementById("prenom").value = "";
@@ -299,5 +348,28 @@ document.getElementById("experience").value = "";
 
 </script>
 
+
+
+
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <h2>📩 Candidature envoyée</h2>
+
+    <p>
+      ✔ Ton dossier a bien été enregistré<br><br>
+
+      ⏳ Délai de réponse : <b>72 heures maximum</b><br>
+      🧑‍💼 Traitement par l’équipe de recrutement<br><br>
+
+      ❗ Inutile d’ouvrir un ticket<br>
+      👉 Tu recevras le résultat directement ici
+    </p>
+
+    <button id="closeModal">OK</button>
+
+  </div>
+</div>
 </body>
 </html>
