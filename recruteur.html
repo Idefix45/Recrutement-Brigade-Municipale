@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Recruteur</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    h1{
+      text-align:center;
+      margin-bottom:20px;
+      color:#60a5fa;
+    }
+
+    .card{
+  background:rgba(30, 41, 59, 0.9);
+  padding:18px;
+  border-radius:16px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
+  border:2px solid #475569;
+  line-height:1.6;
+
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+
+
+.card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 30px rgba(0,0,0,0.5);
+}
+
+    .btn{
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+.btn:hover{
+  transform:scale(1.03);
+}
+
+    .accept{
+  background:#16a34a;
+  color:white;
+  width:100%;
+}
+
+.reject{
+  background:#dc2626;
+  color:white;
+  width:100%;
+}
+
+.close{
+  background:#2563eb;
+  color:white;
+  width:100%;
+}
+
+
+    #list{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:40px;
+}
+
+
+.card b{
+  font-size:18px;
+  color:#60a5fa;
+}
+
+.card br{
+  display:block;
+  margin-bottom:4px;
+}
+
+.countdown{
+  display:inline-block;
+  min-width: 110px;
+  text-align:left;
+  white-space:nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+
+.footer{
+  margin-top:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+
+.info{
+  font-size:14px;
+  opacity:0.9;
+}
+
+  </style>
+</head>
+
+<body>
+
+<h1>Dashboard Recruteur</h1>
+
+<input type="text" id="search" placeholder="🔎 Rechercher un candidat..." style="
+  width:100%;
+  padding:12px;
+  margin-bottom:20px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:#1e293b;
+  color:white;
+  font-size:16px;
+">
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU8DzlUwcVu0W4ywfo",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔐 CHECK RECRUTEUR
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user || user.role !== "recruteur"){
+  window.location.href = "index.html";
+}
+
+
+async function vote(docId, value){
+
+  const ref = doc(db, "applications", docId);
+  const snap = await getDoc(ref);
+
+  const data = snap.data();
+  const votes = data.votes || {};
+
+  const userKey = user.nom + "_" + user.prenom;
+
+  const current = votes[userKey];
+
+  // 🔥 logique propre
+  if (current === value) {
+    // re-clique même vote = on retire
+    delete votes[userKey];
+  } else {
+    // change vote
+    votes[userKey] = value;
+  }
+
+  await updateDoc(ref, { votes });
+
+  loadApplications();
+}
+
+
+
+
+const list = document.getElementById("list");
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", () => {
+  loadApplications(searchInput.value.toLowerCase());
+});
+let allApplications = [];
+
+async function closeApplication(docId) {
+
+  const ref = doc(db, "applications", docId);
+  const snap = await getDoc(ref);
+
+  const data = snap.data();
+  const votes = data.votes || {};
+
+  let oui = 0;
+  let non = 0;
+
+  Object.values(votes).forEach(v => {
+    if (v === 1) oui++;
+    if (v === -1) non++;
+  });
+
+  let decision = "egalité";
+
+  if (oui > non) decision = "accepté";
+  else if (non > oui) decision = "refusé";
+
+  await updateDoc(ref, {
+  status: "closed",
+  manualClose: true,
+  decision: decision
+});
+
+setTimeout(loadApplications, 200);
+
+}
+
+// 📥 CHARGER CANDIDATURES
+async function loadApplications(search = ""){
+
+  const snapshot = await getDocs(collection(db, "applications"));
+
+  list.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+
+    const data = docSnap.data();
+    const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
+
+if (search && !fullName.includes(search)) return;
+    const now = Date.now();
+
+const isClosed =
+  data.status === "closed" ||
+  data.manualClose === true ||
+  (data.voteEndAt && now >= data.voteEndAt);
+
+const isOpen = !isClosed;
+
+if (isClosed) return; // 🔥 AJOUT ICI
+
+let oui = 0;
+let non = 0;
+
+if (data.votes) {
+  Object.values(data.votes).forEach(v => {
+    if (v === 1) oui++;
+    if (v === -1) non++;
+  });
+} 
+
+
+
+// 🔥 FERMETURE AUTO APRÈS 72H
+if (
+  data.status !== "closed" &&
+  data.voteEndAt &&
+  now >= data.voteEndAt
+) {
+
+  let decision = "egalité";
+
+  if (oui > non) {
+    decision = "accepté";
+  }
+  else if (non > oui) {
+    decision = "refusé";
+  }
+
+  updateDoc(doc(db, "applications", docSnap.id), {
+    status: "closed",
+    decision: decision
+  });
+
+}
+
+const total = oui - non;
+// ⏳ COMPTE À REBOURS
+let countdown = "Fermé";
+
+if (data.voteEndAt && now < data.voteEndAt) {
+
+  const diff = data.voteEndAt - now;
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  countdown = `${hours}h ${minutes}m ${seconds}s`;
+}
+
+const div = document.createElement("div");
+div.classList.add("card");
+
+// 🔥 couleur carte
+if (total > 0) {
+  div.style.border = "2px solid #16a34a";
+  div.style.background = "#0f2f1a";
+}
+else if (total < 0) {
+  div.style.border = "2px solid #dc2626";
+  div.style.background = "#2a0f12";
+}
+else {
+  div.style.border = "2px solid #475569";
+  div.style.background = "#1e293b";
+}
+
+    div.innerHTML = `
+  <b>${data.nom} ${data.prenom}</b><br>
+  
+  <div class="info">Âge RP : ${data.age}</div>
+  <div class="info">Âge HRP : ${data.ageH}</div>
+
+  Motivation : ${data.motivation}<br><br>
+  Expérience : ${data.experience}<br>
+  <br>
+  Status : ${
+  data.status === "pending"
+    ? "⏳ En attente"
+    : data.status === "closed"
+    ? "🔴 Clôturé"
+    : "Inconnu"
+}<br>
+  Vote : ${isOpen ? "🟢 Ouvert" : "🔴 Fermé"}<br>
+  <div class="timer-line">
+  ⏳ Fermeture dans : <span class="countdown" data-end="${data.voteEndAt}">${countdown}</span>
+</div>
+
+  👍 Oui : ${oui} <br>
+  👎 Non : ${non} <br>
+  Total : ${total}
+
+  <br>
+
+  <div class="footer">
+${!isClosed ? `
+  <button class="btn accept">Accepter</button>
+  <button class="btn reject">Refuser</button>
+  <button class="btn close">Clôturer</button>
+` : `<p style="color:gray">Votes clôturés</p>`}
+</div>
+`;
+
+    // ✔ ACCEPTER
+    const acceptBtn = div.querySelector(".accept");
+const rejectBtn = div.querySelector(".reject");
+const closeBtn = div.querySelector(".close");
+
+if (acceptBtn) {
+  acceptBtn.onclick = () => vote(docSnap.id, 1);
+}
+
+if (rejectBtn) {
+  rejectBtn.onclick = () => vote(docSnap.id, -1);
+}
+
+if (closeBtn) {
+  closeBtn.onclick = () => closeApplication(docSnap.id);
+}
+
+    list.appendChild(div);
+
+  });
+
+}
+
+
+
+
+
+loadApplications();
+
+setInterval(() => {
+
+  const timers = document.querySelectorAll(".countdown");
+
+  timers.forEach(timer => {
+
+    let end = Number(timer.dataset.end);
+    let now = Date.now();
+
+    let diff = end - now;
+
+    if (diff <= 0) {
+      timer.textContent = "🔴 Fermé";
+      return;
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    timer.textContent = `${hours}h ${minutes}m ${seconds}s`;
+
+  });
+
+}, 1000);
+
+</script>
+
+</body>
+</html>
