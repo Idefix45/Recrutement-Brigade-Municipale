@@ -236,11 +236,26 @@ async function loadApplications(search = ""){
 
   const snapshot = await getDocs(collection(db, "applications"));
 
-  list.innerHTML = "";
+list.innerHTML = "";
 
-  snapshot.forEach((docSnap) => {
+// 🔥 tableau temporaire
+const apps = [];
 
-    const data = docSnap.data();
+snapshot.forEach((docSnap) => {
+
+  apps.push({
+    id: docSnap.id,
+    ...docSnap.data()
+  });
+
+});
+
+// 🔥 tri par date (plus récent en premier)
+apps.sort((a, b) => b.createdAt - a.createdAt);
+
+// 🔥 affichage
+apps.forEach((data) => {
+
     const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
 
 if (search && !fullName.includes(search)) return;
@@ -283,7 +298,7 @@ if (
     decision = "refusé";
   }
 
-  updateDoc(doc(db, "applications", docSnap.id), {
+  updateDoc(doc(db, "applications", data.id), {
     status: "closed",
     decision: decision
   });
@@ -364,15 +379,15 @@ const rejectBtn = div.querySelector(".reject");
 const closeBtn = div.querySelector(".close");
 
 if (acceptBtn) {
-  acceptBtn.onclick = () => vote(docSnap.id, 1);
+  acceptBtn.onclick = () => vote(data.id, 1);
 }
 
 if (rejectBtn) {
-  rejectBtn.onclick = () => vote(docSnap.id, -1);
+  rejectBtn.onclick = () => vote(data.id, -1);
 }
 
 if (closeBtn) {
-  closeBtn.onclick = () => closeApplication(docSnap.id);
+  closeBtn.onclick = () => closeApplication(data.id);
 }
 
     list.appendChild(div);
