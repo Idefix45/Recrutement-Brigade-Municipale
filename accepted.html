@@ -96,56 +96,82 @@ const db = getFirestore(app);
 
 const list = document.getElementById("list");
 
-async function loadApplications(){
+async function loadApplications() {
 
   const snapshot = await getDocs(collection(db, "applications"));
   list.innerHTML = "";
 
+  let count = 0;
+
   snapshot.forEach((docSnap) => {
 
-  const data = docSnap.data();
+    const data = docSnap.data();
 
-  // 🔥 FILTRE IMPORTANT
-  const isClosed = data.status === "closed";
-  const isAccepted = (data.decision || "").toLowerCase().trim() === "accepté";
+    const isClosed = data.status === "closed";
+    const isAccepted = (data.decision || "").toLowerCase().trim() === "accepté";
 
-  if (!isClosed || !isAccepted) return;
+    if (!isClosed || !isAccepted) return;
 
-  const div = document.createElement("div");
-  div.classList.add("card");
+    count++;
 
-  div.innerHTML = `
-    <b>${data.nom} ${data.prenom}</b><br><br>
+    const div = document.createElement("div");
+    div.classList.add("card");
 
-    <div class="info">Âge RP : ${data.age}</div>
-    <div class="info">Âge HRP : ${data.ageH}</div><br>
+    div.innerHTML = `
+      <b>${data.nom} ${data.prenom}</b><br><br>
 
-    Motivation : ${data.motivation}<br><br>
-    Expérience : ${data.experience}<br><br>
+      <div class="info">Âge RP : ${data.age}</div>
+      <div class="info">Âge HRP : ${data.ageH}</div><br>
 
-    Status : 🟢 Accepté & clôturé<br><br>
+      Motivation : ${data.motivation}<br><br>
+      Expérience : ${data.experience}<br><br>
 
-    <button class="delete-btn">🗑 Supprimer</button>
-  `;
+      Status : 🟢 Accepté & clôturé<br><br>
 
-  // ✅ ICI TU AJOUTES LE CLICK
-  const deleteBtn = div.querySelector(".delete-btn");
+      <button class="delete-btn">🗑 Supprimer</button>
+    `;
 
-  deleteBtn.onclick = async () => {
-    const confirmDelete = confirm("Supprimer cette candidature ?");
-    if (!confirmDelete) return;
+    const deleteBtn = div.querySelector(".delete-btn");
 
-    await deleteDoc(doc(db, "applications", docSnap.id));
+    deleteBtn.onclick = async () => {
+      const confirmDelete = confirm("Supprimer cette candidature ?");
+      if (!confirmDelete) return;
 
-    div.remove();
-  };
+      await deleteDoc(doc(db, "applications", docSnap.id));
 
-  list.appendChild(div);
-});
+      div.remove();
+
+      checkEmpty();
+    };
+
+    list.appendChild(div);
+  });
+
+  checkEmpty();
 }
 
-loadApplications();
 
+
+function checkEmpty() {
+  const cards = document.querySelectorAll(".card");
+
+  if (cards.length === 0) {
+    list.innerHTML = `
+      <div style="
+        grid-column: 1 / -1;
+        text-align:center;
+        font-size:18px;
+        opacity:0.7;
+        margin-top:40px;
+      ">
+        📭 Aucune candidature acceptée
+      </div>
+    `;
+  }
+}
+
+
+loadApplications();
 
 
 
