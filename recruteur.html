@@ -432,6 +432,8 @@ if (
 }
 
 const total = oui - non;
+const userKey = user.nom + "_" + user.prenom;
+const myVote = data.votes?.[userKey];
 // ⏳ COMPTE À REBOURS
 let countdown = "Fermé";
 
@@ -520,9 +522,15 @@ else {
 
   <div class="footer">
 ${!isClosed ? `
+  ${myVote !== 1 ? `
   <button class="btn accept">Accepter</button>
+` : ""}
+
+${myVote !== -1 ? `
   <button class="btn reject">Refuser</button>
-  <button class="btn close">Clôturer</button>
+` : ""}
+
+<button class="btn close">Clôturer</button>
 ` : `<p style="color:gray">Votes clôturés</p>`}
 </div>
 `;
