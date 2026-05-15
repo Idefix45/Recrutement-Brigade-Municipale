@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Recruteur</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+  margin-bottom:20px;
+  color:#60a5fa;
+}
+
+#list{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:40px;
+}
+
+.card{
+  background:#1e293b;
+  padding:18px;
+  border-radius:16px;
+  border:2px solid #475569;
+  line-height:1.6;
+}
+
+.card b{
+  font-size:18px;
+  color:#60a5fa;
+}
+
+.info{
+  font-size:14px;
+  opacity:0.9;
+}
+
+.delete-btn{
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  background:#dc2626;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.delete-btn:hover{
+  transform:scale(1.03);
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Dashboard Recruteur</h1>
+
+<div id="list"></div>
+
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU8DzlUwcVu0W4ywfo",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const list = document.getElementById("list");
+
+async function loadApplications(){
+
+  const snapshot = await getDocs(collection(db, "applications"));
+  list.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+
+  const data = docSnap.data();
+
+  // 🔥 FILTRE IMPORTANT
+  const isClosed = data.status === "closed";
+  const isAccepted = (data.decision || "").toLowerCase().trim() === "accepté";
+
+  if (!isClosed || !isAccepted) return;
+
+  const div = document.createElement("div");
+  div.classList.add("card");
+
+  div.innerHTML = `
+    <b>${data.nom} ${data.prenom}</b><br><br>
+
+    <div class="info">Âge RP : ${data.age}</div>
+    <div class="info">Âge HRP : ${data.ageH}</div><br>
+
+    Motivation : ${data.motivation}<br><br>
+    Expérience : ${data.experience}<br><br>
+
+    Status : 🟢 Accepté & clôturé<br><br>
+
+    <button class="delete-btn">🗑 Supprimer</button>
+  `;
+
+  // ✅ ICI TU AJOUTES LE CLICK
+  const deleteBtn = div.querySelector(".delete-btn");
+
+  deleteBtn.onclick = async () => {
+    const confirmDelete = confirm("Supprimer cette candidature ?");
+    if (!confirmDelete) return;
+
+    await deleteDoc(doc(db, "applications", docSnap.id));
+
+    div.remove();
+  };
+
+  list.appendChild(div);
+});
+}
+
+loadApplications();
+
+
+
+
+</script>
+
+</body>
+</html>
