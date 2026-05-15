@@ -66,6 +66,22 @@ h1{
 <body>
 
 <h1>Dashboard Recruteur</h1>
+<input 
+  type="text" 
+  id="search"
+  placeholder="🔎 Rechercher un candidat..."
+  style="
+    width:100%;
+    padding:12px;
+    margin-bottom:20px;
+    border:none;
+    border-radius:10px;
+    background:#1e293b;
+    color:white;
+    font-size:16px;
+    outline:none;
+  "
+>
 
 <div id="list"></div>
 
@@ -96,7 +112,9 @@ const db = getFirestore(app);
 
 const list = document.getElementById("list");
 
-async function loadApplications() {
+const searchInput = document.getElementById("search");
+
+async function loadApplications(search = "") {
 
   const snapshot = await getDocs(collection(db, "applications"));
   list.innerHTML = "";
@@ -106,6 +124,9 @@ async function loadApplications() {
   snapshot.forEach((docSnap) => {
 
     const data = docSnap.data();
+    const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
+
+if (search && !fullName.includes(search)) return;
 
     const isClosed = data.status === "closed";
     const isAccepted = (data.decision || "").toLowerCase().trim() === "accepté";
@@ -170,7 +191,9 @@ function checkEmpty() {
   }
 }
 
-
+searchInput.addEventListener("input", () => {
+  loadApplications(searchInput.value.toLowerCase());
+});
 loadApplications();
 
 

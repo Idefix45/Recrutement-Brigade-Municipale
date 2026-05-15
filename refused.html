@@ -66,6 +66,17 @@ h1{
 <body>
 
 <h1>Dashboard Recruteur</h1>
+<input type="text" id="search" placeholder="🔎 Rechercher un candidat..." style="
+  width:100%;
+  padding:12px;
+  margin-bottom:20px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:#1e293b;
+  color:white;
+  font-size:16px;
+">
 
 <div id="list"></div>
 
@@ -95,6 +106,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const list = document.getElementById("list");
+const searchInput = document.getElementById("search");
+let searchValue = "";
+
+searchInput.addEventListener("input", (e) => {
+  searchValue = e.target.value.toLowerCase();
+  loadApplications();
+});
 
 async function loadApplications() {
 
@@ -107,6 +125,9 @@ async function loadApplications() {
   snapshot.forEach((docSnap) => {
 
     const data = docSnap.data();
+    const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
+
+if (searchValue && !fullName.includes(searchValue)) return;
 
     const isClosed = data.status === "closed";
     const isRefused = (data.decision || "").toLowerCase().trim() === "refusé";
@@ -179,9 +200,13 @@ loadApplications();
 function formatReasons(reasons) {
   if (!reasons) return "Aucune raison";
 
-  return Object.values(reasons)
-    .map(r => `• ${r.reason}`)
-    .join("<br>");
+  const list = Object.values(reasons)
+    .filter(r => r && r.reason) // 🔥 évite erreurs
+    .map(r => `• ${r.reason}`);
+
+  if (list.length === 0) return "Aucune raison";
+
+  return list.join("<br>");
 }
 
 </script>
