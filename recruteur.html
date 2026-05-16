@@ -5,6 +5,17 @@
   <title>Dashboard Recruteur</title>
 
   <style>
+
+
+    *{
+  box-sizing:border-box;
+}
+
+body{
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
     body{
       margin:0;
       font-family:Arial;
@@ -14,68 +25,82 @@
     }
 
     h1{
-      text-align:center;
-      margin-bottom:20px;
-      color:#60a5fa;
-    }
+  text-align:center;
+  margin-bottom:25px;
+  font-size:30px;
+  font-weight:800;
+  letter-spacing:1px;
+  background:linear-gradient(135deg,#60a5fa,#3b82f6,#2563eb);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
 
     .card{
-  background:rgba(30, 41, 59, 0.9);
+  background:rgba(30, 41, 59, 0.75);
   padding:18px;
-  border-radius:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.35);
-  backdrop-filter: blur(8px);
-  border:2px solid #475569;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.4);
+  backdrop-filter: blur(12px);
+  border:1px solid rgba(148,163,184,0.15);
   line-height:1.6;
 
   display:flex;
   flex-direction:column;
   height:100%;
+  transition:0.25s ease;
 }
 
-
 .card:hover{
-  transform:translateY(-3px);
-  box-shadow:0 12px 30px rgba(0,0,0,0.5);
+  transform:translateY(-6px);
+  box-shadow:0 18px 50px rgba(0,0,0,0.6);
+  border:1px solid rgba(59,130,246,0.35);
 }
 
     .btn{
   margin-top:10px;
-  padding:10px;
+  padding:12px 14px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
-  font-weight:bold;
-  transition:0.2s;
+  font-weight:600;
+  letter-spacing:0.3px;
+  transition:0.2s ease;
+  box-shadow:0 6px 18px rgba(0,0,0,0.25);
 }
 
 .btn:hover{
-  transform:scale(1.03);
+  transform:translateY(-2px);
+  filter:brightness(1.1);
 }
 
-    .accept{
-  background:#16a34a;
+.btn:active{
+  transform:scale(0.98);
+}
+
+/* ACCEPT */
+.accept{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
   color:white;
-  width:100%;
 }
 
+/* REJECT */
 .reject{
-  background:#dc2626;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
   color:white;
-  width:100%;
 }
 
+/* CLOSE */
 .close{
-  background:#2563eb;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
   color:white;
-  width:100%;
 }
 
 
-    #list{
+   #list{
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap:40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:25px;
+  width:100%;
 }
 
 
@@ -197,21 +222,6 @@
   margin-bottom:20px;
 }
 
-.filter-btn{
-  flex:1;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-  transition:0.2s;
-  color:white;
-}
-
-.filter-btn:hover{
-  transform:scale(1.03);
-}
 
 .accepted-btn{
   background:#16a34a;
@@ -221,6 +231,113 @@
   background:#dc2626;
 }
 
+.filter-btn{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+
+  background:#1e293b;
+  color:#cbd5e1;
+
+  font-size:15px;
+  font-weight:600;
+
+  cursor:pointer;
+  transition:0.2s ease;
+
+  box-shadow:0 6px 15px rgba(0,0,0,0.2);
+}
+
+.filter-btn:hover{
+  transform:translateY(-2px);
+  background:#334155;
+  color:white;
+}
+
+.filter-btn.active{
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+  color:white;
+  box-shadow:0 10px 25px rgba(37,99,235,0.3);
+}
+
+
+
+input#search{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid transparent;
+  background:#1e293b;
+  color:white;
+  font-size:15px;
+  outline:none;
+  transition:0.2s;
+}
+
+input#search:focus{
+  border:1px solid #3b82f6;
+  box-shadow:0 0 0 4px rgba(59,130,246,0.15);
+}
+
+
+
+
+.top-buttons button{
+  flex:1;
+  padding:14px;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+
+.accepted-btn{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:white;
+}
+
+.refused-btn{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  color:white;
+}
+
+
+.filters{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  width:100%;
+}
+
+.filters .filter-btn{
+  flex:1 1 0;
+  width:100%;
+}
+
+
+.stats-btn{
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s ease;
+
+  background:linear-gradient(135deg,#6366f1,#3b82f6);
+  color:white;
+
+  box-shadow:0 8px 20px rgba(59,130,246,0.25);
+}
+
+.stats-btn:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.1);
+}
   </style>
 </head>
 
@@ -248,6 +365,26 @@
 
   <button onclick="window.location.href='refused.html'" class="filter-btn refused-btn">
     🔴 Refusés
+  </button>
+
+  <button onclick="window.location.href='stats.html'" class="stats-btn">
+  📊 Statistiques
+</button>
+
+</div>
+
+<div class="filters">
+
+  <button class="filter-btn active" data-filter="all">
+    📋 Tout
+  </button>
+
+  <button class="filter-btn" data-filter="notvoted">
+    🟡 Pas voté
+  </button>
+
+  <button class="filter-btn" data-filter="voted">
+    🟢 Voté
   </button>
 
 </div>
@@ -325,6 +462,7 @@ searchInput.addEventListener("input", () => {
   loadApplications(searchInput.value.toLowerCase());
 });
 let allApplications = [];
+let currentFilter = "all";
 
 async function closeApplication(docId) {
 
@@ -384,7 +522,21 @@ apps.forEach((data) => {
 
     const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
 
+const userKey = user.nom + "_" + user.prenom;
+
+const hasVoted =
+  data.votes &&
+  data.votes[userKey] !== undefined;
+
+    
+
 if (search && !fullName.includes(search)) return;
+
+// 🔥 FILTRES
+
+if (currentFilter === "notvoted" && hasVoted) return;
+
+if (currentFilter === "voted" && !hasVoted) return;
     const now = Date.now();
 
 const isClosed =
@@ -432,7 +584,6 @@ if (
 }
 
 const total = oui - non;
-const userKey = user.nom + "_" + user.prenom;
 const myVote = data.votes?.[userKey];
 // ⏳ COMPTE À REBOURS
 let countdown = "Fermé";
@@ -628,7 +779,26 @@ document.getElementById("confirmReason").onclick = async () => {
   loadApplications();
 };
 
+document.querySelectorAll(".filter-btn").forEach(btn => {
 
+  if (!btn.dataset.filter) return;
+
+  btn.onclick = () => {
+
+    document.querySelectorAll(".filter-btn").forEach(b => {
+      if (b.dataset.filter) {
+        b.classList.remove("active");
+      }
+    });
+
+    btn.classList.add("active");
+
+    currentFilter = btn.dataset.filter;
+
+    loadApplications(searchInput.value.toLowerCase());
+  };
+
+});
 
 loadApplications();
 

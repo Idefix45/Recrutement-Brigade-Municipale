@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Statistiques Candidatures</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    h1{
+      text-align:center;
+      font-size:32px;
+      background:linear-gradient(135deg,#60a5fa,#3b82f6,#2563eb);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin-bottom:30px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:20px;
+    }
+
+    .card{
+      background:#1e293b;
+      padding:20px;
+      border-radius:16px;
+      text-align:center;
+      box-shadow:0 10px 25px rgba(0,0,0,0.3);
+      transition:0.2s;
+    }
+
+    .card:hover{
+      transform:translateY(-3px);
+    }
+
+    .card h2{
+      font-size:14px;
+      opacity:0.7;
+      margin-bottom:10px;
+    }
+
+    .card p{
+      font-size:28px;
+      font-weight:bold;
+      margin:0;
+    }
+
+    .accept{ color:#22c55e; }
+    .reject{ color:#ef4444; }
+    .pending{ color:#facc15; }
+
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    }
+
+    .back{
+      background:#2563eb;
+      color:white;
+      padding:10px 14px;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .back:hover{
+      filter:brightness(1.1);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="top">
+  <button class="back" onclick="window.location.href='dashboard.html'">
+    ⬅ Retour
+  </button>
+
+  <h1>Statistiques Candidatures</h1>
+
+  <div></div>
+</div>
+
+<div id="stats" class="grid"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU2...",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const user = JSON.parse(localStorage.getItem("user"));
+
+const userKey = user.nom + "_" + user.prenom;
+
+async function loadStats(){
+
+  const snapshot = await getDocs(collection(db, "applications"));
+
+  let total = 0;
+  let accepted = 0;
+  let refused = 0;
+  let pending = 0;
+  let myYes = 0;
+  let myNo = 0;
+
+  let totalVotes = 0;
+  let totalYes = 0;
+  let totalNo = 0;
+
+  snapshot.forEach(doc => {
+    const d = doc.data();
+    total++;
+
+    const votes = d.votes || {};
+    if (votes[userKey] === 1) myYes++;
+
+if (votes[userKey] === -1) myNo++;
+
+    Object.values(votes).forEach(v => {
+      totalVotes++;
+      if (v === 1) totalYes++;
+      if (v === -1) totalNo++;
+    });
+
+    if (d.status === "closed") {
+      if (d.decision === "accepté") accepted++;
+      else if (d.decision === "refusé") refused++;
+    } else {
+      pending++;
+    }
+  });
+
+  const acceptanceRate = total ? Math.round((accepted / total) * 100) : 0;
+  const voteRatio = totalVotes ? Math.round((totalYes / totalVotes) * 100) : 0;
+  const myTotal = myYes + myNo;
+
+const myRate = myTotal
+  ? Math.round((myYes / myTotal) * 100)
+  : 0;
+
+  document.getElementById("stats").innerHTML = `
+    
+    <div class="card">
+      <h2>Total candidatures</h2>
+      <p>${total}</p>
+    </div>
+
+    <div class="card">
+      <h2>Acceptées</h2>
+      <p class="accept">${accepted}</p>
+    </div>
+
+    <div class="card">
+      <h2>Refusées</h2>
+      <p class="reject">${refused}</p>
+    </div>
+
+    <div class="card">
+      <h2>En attente</h2>
+      <p class="pending">${pending}</p>
+    </div>
+
+    <div class="card">
+      <h2>Taux d'acceptation</h2>
+      <p>${acceptanceRate}%</p>
+    </div>
+
+    <div class="card">
+      <h2>Votes positifs</h2>
+      <p class="accept">${totalYes}</p>
+    </div>
+
+    <div class="card">
+      <h2>Votes négatifs</h2>
+      <p class="reject">${totalNo}</p>
+    </div>
+
+    <div class="card">
+      <h2>Ratio votes oui</h2>
+      <p>${voteRatio}%</p>
+    </div>
+
+    <div class="card">
+  <h2>Mes votes positifs</h2>
+  <p class="accept">${myYes}</p>
+</div>
+
+<div class="card">
+  <h2>Mes votes négatifs</h2>
+  <p class="reject">${myNo}</p>
+</div>
+
+<div class="card">
+  <h2>Mes votes totaux</h2>
+  <p>${myTotal}</p>
+</div>
+
+<div class="card">
+  <h2>Mon taux d'acceptation</h2>
+  <p>${myRate}%</p>
+</div>
+
+  `;
+}
+
+loadStats();
+
+</script>
+
+</body>
+</html>
