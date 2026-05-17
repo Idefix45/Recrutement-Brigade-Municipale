@@ -76,6 +76,215 @@
     .back:hover{
       filter:brightness(1.1);
     }
+
+
+
+    .stat-title{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.tooltip{
+  position:relative;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#334155;
+  color:white;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.tooltip:hover{
+  background:#3b82f6;
+}
+
+.tooltip::after{
+  content:attr(data-tooltip);
+
+  position:absolute;
+  bottom:130%;
+  left:50%;
+  transform:translateX(-50%);
+
+  background:#0f172a;
+  color:white;
+
+  padding:10px;
+  border-radius:10px;
+
+  width:220px;
+
+  font-size:12px;
+  line-height:1.4;
+
+  opacity:0;
+  pointer-events:none;
+
+  transition:0.2s;
+
+  box-shadow:0 10px 25px rgba(0,0,0,0.4);
+
+  z-index:999;
+}
+
+.tooltip:hover::after{
+  opacity:1;
+}
+
+
+.charts-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(420px,1fr));
+  gap:25px;
+  margin-top:35px;
+}
+
+.chart-card{
+  background:rgba(30,41,59,0.95);
+  border-radius:22px;
+  padding:22px;
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+
+  border:1px solid rgba(255,255,255,0.05);
+
+  transition:0.25s;
+}
+
+.chart-card:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    0 20px 45px rgba(0,0,0,0.45),
+    0 0 25px rgba(59,130,246,0.15);
+}
+
+.chart-card h3{
+  margin:0 0 20px;
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+  color:#e2e8f0;
+}
+
+.chart-container{
+  position:relative;
+  height:320px;
+  width:100%;
+}
+
+.dashboard-layout{
+  display:flex;
+  flex-direction:column;
+  gap:35px;
+}
+
+/* SECTION STATS */
+.stats-section{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+/* TITRES */
+.section-title{
+  font-size:22px;
+  font-weight:800;
+  color:#e2e8f0;
+  margin-bottom:5px;
+}
+
+/* GRID STATS */
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(auto-fit,minmax(240px,1fr));
+
+  gap:20px;
+}
+
+/* CARDS */
+.card{
+  background:rgba(30,41,59,0.95);
+
+  border-radius:20px;
+  padding:22px;
+
+  backdrop-filter:blur(10px);
+
+  border:1px solid rgba(255,255,255,0.05);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+
+  transition:0.25s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+  box-shadow:
+    0 18px 45px rgba(0,0,0,0.45),
+    0 0 20px rgba(59,130,246,0.15);
+}
+
+/* CHARTS */
+.charts-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(auto-fit,minmax(500px,1fr));
+
+  gap:25px;
+
+  align-items:stretch;
+}
+
+.chart-card{
+  background:rgba(30,41,59,0.95);
+
+  border-radius:22px;
+  padding:24px;
+
+  border:1px solid rgba(255,255,255,0.05);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.35);
+
+  transition:0.25s;
+}
+
+.chart-card:hover{
+  transform:translateY(-4px);
+}
+
+.chart-card h3{
+  text-align:center;
+  margin-bottom:20px;
+  color:#f8fafc;
+  font-size:20px;
+}
+
+.chart-container{
+  position:relative;
+  width:100%;
+  height:320px;
+}
+
+.stats-wrapper{
+  display:flex;
+  flex-direction:column;
+  gap:35px;
+}
   </style>
 </head>
 
@@ -91,7 +300,44 @@
   <div></div>
 </div>
 
-<div id="stats" class="grid"></div>
+<div class="dashboard-layout">
+
+  <div>
+    <div class="section-title">📊 Vue globale</div>
+    <div id="globalStats" class="grid"></div>
+  </div>
+
+  <div>
+    <div class="section-title">🗳 Votes généraux</div>
+    <div id="voteStats" class="grid"></div>
+  </div>
+
+  <div>
+    <div class="section-title">👤 Mes statistiques</div>
+    <div id="personalStats" class="grid"></div>
+  </div>
+
+</div>
+
+<div class="charts-grid">
+
+  <div class="chart-card">
+    <h3>📋 Candidatures</h3>
+    <div class="chart-container">
+      <canvas id="pieStatus"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>🗳 Votes</h3>
+    <div class="chart-container">
+      <canvas id="barVotes"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script type="module">
 
@@ -163,69 +409,204 @@ const myRate = myTotal
   ? Math.round((myYes / myTotal) * 100)
   : 0;
 
-  document.getElementById("stats").innerHTML = `
-    
-    <div class="card">
-      <h2>Total candidatures</h2>
-      <p>${total}</p>
-    </div>
+  document.getElementById("globalStats").innerHTML = `
 
-    <div class="card">
-      <h2>Acceptées</h2>
-      <p class="accept">${accepted}</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>Total candidatures</h2>
+    <div class="tooltip"
+         data-tooltip="Nombre total de candidatures reçues.">
+      ?
     </div>
+  </div>
+  <p>${total}</p>
+</div>
 
-    <div class="card">
-      <h2>Refusées</h2>
-      <p class="reject">${refused}</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>Acceptées</h2>
+    <div class="tooltip"
+         data-tooltip="Candidatures validées définitivement par les recruteurs.">
+      ?
     </div>
+  </div>
+  <p class="accept">${accepted}</p>
+</div>
 
-    <div class="card">
-      <h2>En attente</h2>
-      <p class="pending">${pending}</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>Refusées</h2>
+    <div class="tooltip"
+         data-tooltip="Candidatures refusées définitivement après les votes.">
+      ?
     </div>
+  </div>
+  <p class="reject">${refused}</p>
+</div>
 
-    <div class="card">
-      <h2>Taux d'acceptation</h2>
-      <p>${acceptanceRate}%</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>En attente</h2>
+    <div class="tooltip"
+         data-tooltip="Candidatures encore ouvertes et non clôturées.">
+      ?
     </div>
+  </div>
+  <p class="pending">${pending}</p>
+</div>
 
-    <div class="card">
-      <h2>Votes positifs</h2>
-      <p class="accept">${totalYes}</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>Taux d'acceptation</h2>
+    <div class="tooltip"
+         data-tooltip="Pourcentage des candidatures acceptées sur le total reçu.">
+      ?
     </div>
+  </div>
+  <p>${acceptanceRate}%</p>
+</div>
 
-    <div class="card">
-      <h2>Votes négatifs</h2>
-      <p class="reject">${totalNo}</p>
+`;
+
+
+
+document.getElementById("voteStats").innerHTML = `
+
+<div class="card">
+  <div class="stat-title">
+    <h2>Votes positifs</h2>
+    <div class="tooltip"
+         data-tooltip="Nombre total de votes positifs donnés par tous les recruteurs.">
+      ?
     </div>
+  </div>
+  <p class="accept">${totalYes}</p>
+</div>
 
-    <div class="card">
-      <h2>Ratio votes oui</h2>
-      <p>${voteRatio}%</p>
+<div class="card">
+  <div class="stat-title">
+    <h2>Votes négatifs</h2>
+    <div class="tooltip"
+         data-tooltip="Nombre total de votes négatifs donnés par tous les recruteurs.">
+      ?
     </div>
+  </div>
+  <p class="reject">${totalNo}</p>
+</div>
 
-    <div class="card">
-  <h2>Mes votes positifs</h2>
+<div class="card">
+  <div class="stat-title">
+    <h2>Ratio votes oui</h2>
+    <div class="tooltip"
+         data-tooltip="Pourcentage de votes positifs par rapport à l'ensemble des votes.">
+      ?
+    </div>
+  </div>
+  <p>${voteRatio}%</p>
+</div>
+
+`;
+
+
+document.getElementById("personalStats").innerHTML = `
+
+<div class="card">
+  <div class="stat-title">
+    <h2>Mes votes positifs</h2>
+    <div class="tooltip"
+         data-tooltip="Nombre de candidatures que tu as personnellement acceptées.">
+      ?
+    </div>
+  </div>
   <p class="accept">${myYes}</p>
 </div>
 
 <div class="card">
-  <h2>Mes votes négatifs</h2>
+  <div class="stat-title">
+    <h2>Mes votes négatifs</h2>
+    <div class="tooltip"
+         data-tooltip="Nombre de candidatures que tu as personnellement refusées.">
+      ?
+    </div>
+  </div>
   <p class="reject">${myNo}</p>
 </div>
 
 <div class="card">
-  <h2>Mes votes totaux</h2>
+  <div class="stat-title">
+    <h2>Mes votes totaux</h2>
+    <div class="tooltip"
+         data-tooltip="Total de tes décisions prises.">
+      ?
+    </div>
+  </div>
   <p>${myTotal}</p>
 </div>
 
 <div class="card">
-  <h2>Mon taux d'acceptation</h2>
+  <div class="stat-title">
+    <h2>Mon taux d'acceptation</h2>
+    <div class="tooltip"
+         data-tooltip="Pourcentage de tes votes qui sont positifs.">
+      ?
+    </div>
+  </div>
   <p>${myRate}%</p>
 </div>
 
-  `;
+`;
+
+
+
+  const ctx1 = document.getElementById("pieStatus");
+
+new Chart(ctx1, {
+  type: "doughnut",
+  data: {
+    labels: ["Acceptées", "Refusées", "En attente"],
+    datasets: [{
+      data: [accepted, refused, pending],
+      backgroundColor: ["#22c55e", "#ef4444", "#facc15"],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    plugins: {
+      legend: {
+        labels: { color: "white" }
+      }
+    }
+  }
+});
+
+
+
+
+const ctx2 = document.getElementById("barVotes");
+
+new Chart(ctx2, {
+  type: "bar",
+  data: {
+    labels: ["Votes positifs", "Votes négatifs"],
+    datasets: [{
+      data: [totalYes, totalNo],
+      backgroundColor: ["#22c55e", "#ef4444"]
+    }]
+  },
+  options: {
+    scales: {
+      y: {
+        ticks: { color: "white" }
+      },
+      x: {
+        ticks: { color: "white" }
+      }
+    },
+    plugins: {
+      legend: { display: false }
+    }
+  }
+});
 }
 
 loadStats();
