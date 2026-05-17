@@ -610,17 +610,6 @@ function resetModal(){
 }
 
 
-function initReasons(){
-  document.querySelectorAll(".reason").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll(".reason").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      selectedReason = btn.textContent;
-    };
-  });
-}
-
-initReasons();
 
 
 
@@ -697,8 +686,14 @@ if (acceptBtn) {
 
 if (rejectBtn) {
   rejectBtn.onclick = () => {
+
   selectedDocId = data.id;
   selectedReason = null;
+
+  // 🔥 RESET VISUEL OBLIGATOIRE
+  document.querySelectorAll(".reason").forEach(b => {
+    b.classList.remove("selected");
+  });
 
   document.getElementById("reasonModal").classList.remove("hidden");
 };
@@ -743,10 +738,10 @@ document.getElementById("cancelReason").onclick = () => {
 
 document.getElementById("confirmReason").onclick = async () => {
 
-  if (!selectedReason) {
-    alert("Choisis une raison !");
-    return;
-  }
+  if (!selectedDocId || !selectedReason) {
+  alert("Choisis une raison !");
+  return;
+}
 
   const ref = doc(db, "applications", selectedDocId);
   const snap = await getDoc(ref);
