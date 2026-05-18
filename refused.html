@@ -125,6 +125,23 @@ async function loadApplications() {
   snapshot.forEach((docSnap) => {
 
     const data = docSnap.data();
+    const closed =
+  data.closedAt?.toMillis?.()
+  || data.closedAt;
+
+if(closed){
+
+  const week =
+    1000 * 60 * 60 * 24 * 7;
+
+  // SUPPRESSION AUTO APRÈS 7 JOURS
+  if(Date.now() - closed > week){
+
+    deleteDoc(doc(db, "applications", docSnap.id));
+
+    return;
+  }
+}
     const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
 
 if (searchValue && !fullName.includes(searchValue)) return;
@@ -152,22 +169,9 @@ if (searchValue && !fullName.includes(searchValue)) return;
   ${formatReasons(data.reasons)}<br><br>
 
   Status : 🔴 Refusé & clôturé<br><br>
-
-  <button class="delete-btn">🗑 Supprimer</button>
 `;
 
-    const deleteBtn = div.querySelector(".delete-btn");
 
-    deleteBtn.onclick = async () => {
-      const confirmDelete = confirm("Supprimer cette candidature ?");
-      if (!confirmDelete) return;
-
-      await deleteDoc(doc(db, "applications", docSnap.id));
-
-      div.remove();
-
-      checkEmpty();
-    };
 
     list.appendChild(div);
   });

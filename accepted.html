@@ -148,22 +148,9 @@ if (search && !fullName.includes(search)) return;
       Expérience : ${data.experience}<br><br>
 
       Status : 🟢 Accepté & clôturé<br><br>
-
-      <button class="delete-btn">🗑 Supprimer</button>
     `;
 
-    const deleteBtn = div.querySelector(".delete-btn");
 
-    deleteBtn.onclick = async () => {
-      const confirmDelete = confirm("Supprimer cette candidature ?");
-      if (!confirmDelete) return;
-
-      await deleteDoc(doc(db, "applications", docSnap.id));
-
-      div.remove();
-
-      checkEmpty();
-    };
 
     list.appendChild(div);
   });

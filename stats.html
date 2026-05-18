@@ -285,6 +285,59 @@
   flex-direction:column;
   gap:35px;
 }
+
+
+
+
+.cand-control{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin-top:10px;
+}
+
+.cand-number{
+  font-size:32px;
+  font-weight:800;
+  margin:0;
+  color:#ffffff;
+  min-width:60px;
+  text-align:center;
+}
+
+.arrow-mini{
+  width:36px;
+  height:36px;
+
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+
+  background:rgba(30,41,59,0.9);
+  color:white;
+
+  font-size:20px;
+  font-weight:bold;
+
+  cursor:pointer;
+
+  transition:0.2s;
+}
+
+.arrow-mini:hover{
+  background:#2563eb;
+  transform:translateY(-2px);
+}
+
+.arrow-mini:active{
+  transform:scale(0.95);
+}
+
+.cand-label{
+  margin-top:8px;
+  font-size:13px;
+  opacity:0.7;
+}
   </style>
 </head>
 
@@ -305,6 +358,7 @@
   <div>
     <div class="section-title">📊 Vue globale</div>
     <div id="globalStats" class="grid"></div>
+    
   </div>
 
   <div>
@@ -363,6 +417,34 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 const userKey = user.nom + "_" + user.prenom;
 
+let periodIndex = 2; 
+
+
+function inPeriod(timestamp) {
+  const now = Date.now();
+  const day = 1000 * 60 * 60 * 24;
+
+  const time = timestamp?.toMillis ? timestamp.toMillis() : timestamp;
+
+  if (!time) return false;
+
+  if (periodIndex === 0) return now - time <= day;
+  if (periodIndex === 1) return now - time <= day * 7;
+  if (periodIndex === 2) return now - time <= day * 30;
+
+  return true;
+}
+
+
+window.changePeriod = (dir) => {
+  periodIndex += dir;
+
+  if (periodIndex < 0) periodIndex = 0;
+  if (periodIndex > 2) periodIndex = 2;
+
+  loadStats();
+};
+
 async function loadStats(){
 
   const snapshot = await getDocs(collection(db, "applications"));
@@ -377,13 +459,32 @@ async function loadStats(){
   let totalVotes = 0;
   let totalYes = 0;
   let totalNo = 0;
+  let totalTime = 0;
+  let closedCount = 0;
+  let candCount = 0;
+  
 
   snapshot.forEach(doc => {
     const d = doc.data();
     total++;
 
+    const created = d.createdAt?.toMillis?.() || d.createdAt;
+
+if (created && inPeriod(created)) {
+  candCount++;
+}
+
     const votes = d.votes || {};
     if (votes[userKey] === 1) myYes++;
+
+    if (d.createdAt && d.closedAt) {
+
+  const created = d.createdAt?.toMillis?.() || d.createdAt;
+  const closed = d.closedAt?.toMillis?.() || d.closedAt;
+
+  totalTime += (closed - created);
+  closedCount++;
+}
 
 if (votes[userKey] === -1) myNo++;
 
@@ -408,6 +509,11 @@ if (votes[userKey] === -1) myNo++;
 const myRate = myTotal
   ? Math.round((myYes / myTotal) * 100)
   : 0;
+
+  const avgMs = closedCount ? totalTime / closedCount : 0;
+
+const avgHours = Math.floor(avgMs / (1000 * 60 * 60));
+const avgMinutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60));
 
   document.getElementById("globalStats").innerHTML = `
 
@@ -466,6 +572,31 @@ const myRate = myTotal
   <p>${acceptanceRate}%</p>
 </div>
 
+
+<div class="card">
+  <div class="stat-title">
+    <h2>Candidatures</h2>
+  </div>
+
+  <div class="cand-control">
+    <button onclick="changePeriod(-1)" class="arrow-mini">‹</button>
+
+    <p id="candCount" class="cand-number">0</p>
+
+    <button onclick="changePeriod(1)" class="arrow-mini">›</button>
+  </div>
+
+  <p id="candLabel" class="cand-label">Par mois</p>
+</div>
+
+<div class="card" onclick="window.location.href='agent.html'">
+  <div class="stat-title">
+    <h2>Stats par agent</h2>
+  </div>
+
+  <p style="font-size:26px; margin:0;">👮</p>
+</div>
+
 `;
 
 
@@ -505,7 +636,24 @@ document.getElementById("voteStats").innerHTML = `
   <p>${voteRatio}%</p>
 </div>
 
+
+<div class="card">
+  <div class="stat-title">
+    <h2>Temps moyen de traitement</h2>
+    <div class="tooltip"
+         data-tooltip="Temps moyen entre la création et la décision d'une candidature.">
+      ?
+    </div>
+  </div>
+  <p>${avgHours}h ${avgMinutes}min</p>
+</div>
 `;
+
+document.getElementById("candCount").innerText = candCount;
+const labels = ["Jour", "Semaine", "Mois"];
+
+document.getElementById("candLabel").innerText = labels[periodIndex];
+
 
 
 document.getElementById("personalStats").innerHTML = `

@@ -488,7 +488,8 @@ async function closeApplication(docId) {
   await updateDoc(ref, {
   status: "closed",
   manualClose: true,
-  decision: decision
+  decision: decision,
+  closedAt: Date.now() // 🔥 AJOUT IMPORTANT
 });
 
 setTimeout(loadApplications, 200);

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Stats Recruteurs</title>
+
+<style>
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+/* HEADER */
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+h1{
+  font-size:32px;
+
+  background:linear-gradient(
+    135deg,
+    #60a5fa,
+    #3b82f6,
+    #2563eb
+  );
+
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* BACK BUTTON */
+
+.back{
+  background:#2563eb;
+  border:none;
+  padding:12px 16px;
+  border-radius:12px;
+  color:white;
+  cursor:pointer;
+  transition:0.2s;
+  font-weight:bold;
+}
+
+.back:hover{
+  transform:scale(1.05);
+  filter:brightness(1.15);
+}
+
+/* GRID */
+
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(auto-fit,minmax(300px,1fr));
+
+  gap:25px;
+}
+
+/* CARD */
+
+.card{
+  background:rgba(30,41,59,0.95);
+
+  border-radius:22px;
+  padding:24px;
+
+  border:1px solid rgba(255,255,255,0.05);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+
+  transition:0.25s;
+
+  position:relative;
+  overflow:hidden;
+}
+
+.card::before{
+  content:"";
+
+  position:absolute;
+  top:0;
+  left:0;
+
+  width:100%;
+  height:4px;
+
+  background:linear-gradient(
+    90deg,
+    #3b82f6,
+    #60a5fa
+  );
+}
+
+.card:hover{
+  transform:translateY(-6px);
+
+  box-shadow:
+    0 20px 45px rgba(0,0,0,0.45),
+    0 0 20px rgba(59,130,246,0.2);
+}
+
+/* TITLES */
+
+.card h2{
+  margin:0;
+  margin-bottom:8px;
+
+  font-size:22px;
+  color:#f8fafc;
+}
+
+.agent-role{
+  color:#94a3b8;
+  font-size:13px;
+  margin-bottom:18px;
+}
+
+/* STATS */
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.stat-box{
+  background:#0f172a;
+  padding:14px;
+  border-radius:14px;
+  text-align:center;
+}
+
+.stat-label{
+  font-size:13px;
+  color:#94a3b8;
+  margin-bottom:6px;
+}
+
+.stat-value{
+  font-size:26px;
+  font-weight:bold;
+}
+
+.accept{
+  color:#22c55e;
+}
+
+.reject{
+  color:#ef4444;
+}
+
+/* TOTAL */
+
+.total-votes{
+  margin-top:10px;
+  text-align:center;
+  font-size:14px;
+  color:#cbd5e1;
+}
+
+/* PROGRESS BAR */
+
+.progress-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:8px;
+  font-size:13px;
+  color:#cbd5e1;
+}
+
+.progress{
+  width:100%;
+  height:12px;
+  background:#0f172a;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  border-radius:999px;
+
+  background:linear-gradient(
+    90deg,
+    #22c55e,
+    #16a34a
+  );
+}
+
+/* PERIOD */
+
+.period-box{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:18px;
+  margin-bottom:30px;
+}
+
+.arrow-btn{
+  width:42px;
+  height:42px;
+
+  border:none;
+  border-radius:12px;
+
+  background:#334155;
+  color:white;
+
+  font-size:22px;
+  cursor:pointer;
+
+  transition:0.2s;
+}
+
+.arrow-btn:hover{
+  background:#2563eb;
+  transform:scale(1.08);
+}
+
+.period-text{
+  font-size:18px;
+  font-weight:bold;
+  min-width:180px;
+  text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top">
+
+  <button
+    class="back"
+    onclick="window.location.href='dashboard.html'">
+    ⬅ Retour
+  </button>
+
+  <h1>Statistiques Recruteurs</h1>
+
+  <div></div>
+
+</div>
+
+<div class="period-box">
+
+  <button
+    class="arrow-btn"
+    onclick="changePeriod(-1)">
+    ‹
+  </button>
+
+  <div
+    class="period-text"
+    id="periodLabel">
+    Ce mois
+  </div>
+
+  <button
+    class="arrow-btn"
+    onclick="changePeriod(1)">
+    ›
+  </button>
+
+</div>
+
+<div class="grid"></div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* FIREBASE */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAze3ItBHUdN4MtvU2...",
+  authDomain: "recrutement-brigade-municpale.firebaseapp.com",
+  projectId: "recrutement-brigade-municpale",
+  storageBucket: "recrutement-brigade-municpale.appspot.com",
+  messagingSenderId: "130575947554",
+  appId: "1:130575947554:web:75fe8bcff763ac67e3377b"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+/* PERIOD */
+
+let periodIndex = 2;
+
+const labels = [
+  "Aujourd’hui",
+  "Cette semaine",
+  "Ce mois"
+];
+
+function inPeriod(timestamp){
+
+  const now = Date.now();
+
+  const day = 86400000;
+
+  const time =
+    timestamp?.toMillis
+      ? timestamp.toMillis()
+      : timestamp;
+
+  if(periodIndex === 0)
+    return now - time <= day;
+
+  if(periodIndex === 1)
+    return now - time <= day * 7;
+
+  if(periodIndex === 2)
+    return now - time <= day * 30;
+
+  return true;
+}
+
+window.changePeriod = (dir) => {
+
+  periodIndex += dir;
+
+  if(periodIndex < 0)
+    periodIndex = 0;
+
+  if(periodIndex > 2)
+    periodIndex = 2;
+
+  load();
+};
+
+/* LOAD */
+
+async function load(){
+
+  document.getElementById("periodLabel")
+    .innerText = labels[periodIndex];
+
+  const appsSnap =
+    await getDocs(collection(db,"applications"));
+
+  const usersSnap =
+    await getDocs(collection(db,"users"));
+
+  let html = "";
+
+  usersSnap.forEach(userDoc => {
+
+    const u = userDoc.data();
+
+    /* GARDE SEULEMENT RECRUTEUR */
+
+    if(u.role !== "recruteur")
+      return;
+
+    const recruiterKey =
+      u.nom + "_" + u.prenom;
+
+    let yes = 0;
+    let no = 0;
+    let total = 0;
+
+    appsSnap.forEach(appDoc => {
+
+      const d = appDoc.data();
+
+      const created =
+        d.createdAt?.toMillis?.()
+        || d.createdAt;
+
+      if(!created || !inPeriod(created))
+        return;
+
+      const votes = d.votes || {};
+
+      if(votes[recruiterKey] === 1){
+
+        yes++;
+        total++;
+
+      }
+
+      if(votes[recruiterKey] === -1){
+
+        no++;
+        total++;
+
+      }
+
+    });
+
+    const rate = total
+      ? Math.round((yes / total) * 100)
+      : 0;
+
+    html += `
+
+      <div class="card">
+
+        <h2>
+          👮 ${u.prenom} ${u.nom}
+        </h2>
+
+        <div class="agent-role">
+          Recruteur
+        </div>
+
+        <div class="stats">
+
+          <div class="stat-box">
+
+            <div class="stat-label">
+              Votes positifs
+            </div>
+
+            <div class="stat-value accept">
+              ${yes}
+            </div>
+
+          </div>
+
+          <div class="stat-box">
+
+            <div class="stat-label">
+              Votes négatifs
+            </div>
+
+            <div class="stat-value reject">
+              ${no}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="total-votes">
+          🗳 ${total} votes effectués
+        </div>
+
+        <div style="margin-top:18px;">
+
+          <div class="progress-header">
+
+            <span>
+              Taux positif
+            </span>
+
+            <span>
+              ${rate}%
+            </span>
+
+          </div>
+
+          <div class="progress">
+
+            <div
+              class="progress-bar"
+              style="width:${rate}%">
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  document.querySelector(".grid").innerHTML = html;
+}
+
+load();
+
+</script>
+
+</body>
+</html>
