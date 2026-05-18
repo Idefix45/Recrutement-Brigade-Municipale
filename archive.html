@@ -80,52 +80,59 @@ const db = getFirestore(app);
 
 const list = document.getElementById("list");
 
-async function load(){
+async function load() {
 
-  const snap = await getDocs(collection(db,"applications"));
+  const snap = await getDocs(collection(db, "applications"));
 
   list.innerHTML = "";
 
-  snap.forEach(docSnap => {
+  const WEEK = 1000 * 60 * 60 * 24 * 7;
+const now = Date.now();
 
-    const d = docSnap.data();
+snap.forEach(docSnap => {
 
-    // ⛔ seulement candidatures fermées
-    if(d.status !== "closed") return;
+  const d = docSnap.data();
 
-    const closed = d.closedAt?.toMillis?.() || d.closedAt;
-    if(!closed) return;
+  const closedAt =
+    d.closedAt?.toMillis?.()
+    ?? Number(d.closedAt)
+    ?? null;
 
-    // ⛔ seulement après 7 jours
-    const week = 1000 * 60 * 60 * 24 * 7;
-    if(Date.now() - closed < week) return;
+  if (!closedAt) return;
 
-    const decision = d.decision || "inconnu";
+  if (d.status !== "closed") return;
 
-    const div = document.createElement("div");
-    div.classList.add("card");
+  // ❌ pas encore archivé
+  if (now < closedAt + WEEK) return;
 
-    div.innerHTML = `
-      <b>${d.nom} ${d.prenom}</b><br><br>
+  const archiveDate = new Date(closedAt + WEEK).toLocaleString("fr-FR");
 
-      <div class="info">Âge RP : ${d.age}</div>
-      <div class="info">Âge HRP : ${d.ageH}</div><br>
+  const decision = d.decision || "inconnu";
 
-      Motivation : ${d.motivation}<br><br>
-      Expérience : ${d.experience}<br><br>
+  const div = document.createElement("div");
+  div.classList.add("card");
 
-      Décision :
-      <span class="${decision === "accepté" ? "tag-accept" : "tag-reject"}">
-        ${decision}
-      </span><br><br>
+  div.innerHTML = `
+    <b>${d.nom} ${d.prenom}</b><br><br>
 
-      Fermée depuis +7 jours
-    `;
+    <div class="info">Âge RP : ${d.age}</div>
+    <div class="info">Âge HRP : ${d.ageH}</div><br>
 
-    list.appendChild(div);
-  });
+    Motivation : ${d.motivation}<br><br>
+    Expérience : ${d.experience}<br><br>
 
-  if(list.innerHTML === ""){
+    Décision :
+    <span class="${decision === "accepté" ? "tag-accept" : "tag-reject"}">
+      ${decision}
+    </span><br><br>
+
+    📦 Archivé le : ${archiveDate}
+  `;
+
+  list.appendChild(div);
+});
+
+  if (!list.innerHTML.trim()) {
     list.innerHTML = `
       <p style="text-align:center;opacity:0.7;">
         📭 Aucune archive disponible

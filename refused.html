@@ -125,23 +125,33 @@ async function loadApplications() {
   snapshot.forEach((docSnap) => {
 
     const data = docSnap.data();
-    const closed =
-  data.closedAt?.toMillis?.()
-  || data.closedAt;
 
-if(closed){
+// 🔥 date clôture
+const closedAt = data.closedAt ? Number(data.closedAt) : null;
 
-  const week =
-    1000 * 60 * 60 * 24 * 7;
+// date d'archivage = +7 jours
+const archiveAt = closedAt
+  ? closedAt + (1000 * 60 * 60 * 24 * 7)
+  : null;
 
-  // SUPPRESSION AUTO APRÈS 7 JOURS
-  if(Date.now() - closed > week){
+const now = Date.now();
 
-    deleteDoc(doc(db, "applications", docSnap.id));
+// ❌ si déjà archivé → on n'affiche PAS ici
+if (archiveAt && now >= archiveAt) return;
 
-    return;
-  }
-}
+// affichage dates
+const formattedClosedDate = closedAt
+  ? new Date(closedAt).toLocaleString("fr-FR")
+  : "Inconnue";
+
+const formattedArchiveDate = archiveAt
+  ? new Date(archiveAt).toLocaleString("fr-FR")
+  : "Inconnue";
+
+
+  
+
+
     const fullName = `${data.nom} ${data.prenom}`.toLowerCase();
 
 if (searchValue && !fullName.includes(searchValue)) return;
@@ -168,7 +178,9 @@ if (searchValue && !fullName.includes(searchValue)) return;
   <b>❌ Raison(s) du refus :</b><br>
   ${formatReasons(data.reasons)}<br><br>
 
-  Status : 🔴 Refusé & clôturé<br><br>
+  Status : 🔴 Refusé & clôturé<br>
+  📅 Clôture : ${formattedClosedDate}<br>
+  📦 Archivage : ${formattedArchiveDate}
 `;
 
 

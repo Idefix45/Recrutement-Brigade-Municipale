@@ -367,6 +367,10 @@ input#search:focus{
     🔴 Refusés
   </button>
 
+  <button onclick="window.location.href='archive.html'" class="stats-btn">
+  📦 Archives
+</button>
+
   <button onclick="window.location.href='stats.html'" class="stats-btn">
   📊 Statistiques
 </button>
@@ -487,9 +491,9 @@ async function closeApplication(docId) {
 
   await updateDoc(ref, {
   status: "closed",
-  manualClose: true,
   decision: decision,
-  closedAt: Date.now() // 🔥 AJOUT IMPORTANT
+  closedAt: Date.now(),
+  archiveAt: Date.now() + (1000 * 60 * 60 * 24 * 7) // +7 jours
 });
 
 setTimeout(loadApplications, 200);
@@ -579,7 +583,7 @@ if (
 
   updateDoc(doc(db, "applications", data.id), {
     status: "closed",
-    decision: decision
+    decision: decision,
     closedAt: Date.now()
   });
 
