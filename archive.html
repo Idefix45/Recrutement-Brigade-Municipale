@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Archives Candidatures</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+  color:#60a5fa;
+  margin-bottom:20px;
+}
+
+#list{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+
+.card{
+  background:#1e293b;
+  padding:16px;
+  border-radius:14px;
+  border:1px solid #334155;
+}
+
+b{
+  color:#60a5fa;
+}
+
+.info{
+  font-size:14px;
+  opacity:0.9;
+}
+
+.tag-accept{
+  color:#22c55e;
+  font-weight:bold;
+}
+
+.tag-reject{
+  color:#ef4444;
+  font-weight:bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>📦 Archives (7 jours après clôture)</h1>
+
+<div id="list"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "XXX",
+  authDomain: "XXX",
+  projectId: "XXX",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const list = document.getElementById("list");
+
+async function load(){
+
+  const snap = await getDocs(collection(db,"applications"));
+
+  list.innerHTML = "";
+
+  snap.forEach(docSnap => {
+
+    const d = docSnap.data();
+
+    // ⛔ seulement candidatures fermées
+    if(d.status !== "closed") return;
+
+    const closed = d.closedAt?.toMillis?.() || d.closedAt;
+    if(!closed) return;
+
+    // ⛔ seulement après 7 jours
+    const week = 1000 * 60 * 60 * 24 * 7;
+    if(Date.now() - closed < week) return;
+
+    const decision = d.decision || "inconnu";
+
+    const div = document.createElement("div");
+    div.classList.add("card");
+
+    div.innerHTML = `
+      <b>${d.nom} ${d.prenom}</b><br><br>
+
+      <div class="info">Âge RP : ${d.age}</div>
+      <div class="info">Âge HRP : ${d.ageH}</div><br>
+
+      Motivation : ${d.motivation}<br><br>
+      Expérience : ${d.experience}<br><br>
+
+      Décision :
+      <span class="${decision === "accepté" ? "tag-accept" : "tag-reject"}">
+        ${decision}
+      </span><br><br>
+
+      Fermée depuis +7 jours
+    `;
+
+    list.appendChild(div);
+  });
+
+  if(list.innerHTML === ""){
+    list.innerHTML = `
+      <p style="text-align:center;opacity:0.7;">
+        📭 Aucune archive disponible
+      </p>
+    `;
+  }
+}
+
+load();
+
+</script>
+
+</body>
+</html>

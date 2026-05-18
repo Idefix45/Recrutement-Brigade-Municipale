@@ -580,6 +580,7 @@ if (
   updateDoc(doc(db, "applications", data.id), {
     status: "closed",
     decision: decision
+    closedAt: Date.now()
   });
 
 }
